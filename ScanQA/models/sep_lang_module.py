@@ -16,7 +16,7 @@ class LangModule(nn.Module):
 
         self.num_object_class = num_object_class
         self.use_lang_classifier = use_lang_classifier
-        self.use_bidir = use_bidir
+        self.use_bidir = use_bidir#双向LSTM
         self.num_layers = num_layers               
 
         self.lstm = nn.LSTM(
@@ -39,6 +39,7 @@ class LangModule(nn.Module):
                 nn.Linear(lang_size, num_object_class),
             )
 
+   #通过计算特征张量沿最后一个维度的绝对值之和，然后检查是否等于零来确定零值的位置。
     def make_mask(self, feature):
         """
         return a mask that is True for zero values and False for other values.
@@ -60,6 +61,7 @@ class LangModule(nn.Module):
         s_embs = self.word_drop(s_embs)
         q_embs = self.word_drop(q_embs)
 
+        #对描述的嵌入进行打包，以便在LSTM中进行变长序列的处理。
         s_feat = pack_padded_sequence(s_embs, data_dict["s_len"].cpu(), batch_first=True, enforce_sorted=False)
         q_feat = pack_padded_sequence(q_embs, data_dict["q_len"].cpu(), batch_first=True, enforce_sorted=False)
 
@@ -67,6 +69,7 @@ class LangModule(nn.Module):
         packed_s, (_, _) = self.lstm(s_feat)
         packed_q, (_, _) = self.lstm(q_feat)
         
+        #解包LSTM的输出，得到编码后的描述表示 s_output 和 q_output。
         s_output, _ = pad_packed_sequence(packed_s, batch_first=True)
         q_output, _ = pad_packed_sequence(packed_q, batch_first=True)
         
